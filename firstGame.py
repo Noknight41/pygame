@@ -15,38 +15,73 @@ walkLeft = [pygame.image.load(asset + 'L1.png'), pygame.image.load(asset + 'L2.p
 bg = pygame.image.load(asset + 'bg.jpg')
 char = pygame.image.load(asset + 'standing.png')
 
-#Variable
-x = 50
-y = 400
-width = 64
-height = 64
-vel = 5
-
 clock = pygame.time.Clock()
 
-isJump = False
-jumpCount = 10
-left = False
-right = False
-walkCount = 0
-
+class player(object):
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.vel = 5
+        self.airBorne = False
+        self.jumpCount = 10
+        self.left = False
+        self.right = False
+        self.walkCount = 0
+    
+    def moveLeft(self):
+        self.x = self.x - self.vel
+        self.left = True
+        self.right = False
+        
+    def moveRight(self):
+        self.x = self.x + self.vel
+        self.left = False
+        self.right = True
+        
+    def stand(self):
+        self.right = False
+        self.left = False
+        self.walkCount = 0
+    
+    def jumpInit(self):
+        self.airBorne = True
+        self.right = False
+        self.left = False
+        self.walkCount = 0
+    
+    def jump(self):
+        if self.jumpCount >= -10:
+            neg = 1
+            if self.jumpCount < 0:
+                neg = -1
+            self.y = self.y - neg * (self.jumpCount ** 2) * 0.5
+            self.jumpCount = self.jumpCount - 1
+        else:
+            self.airBorne = False
+            self.jumpCount = 10
+            
+    def draw(self, win):
+        if self.walkCount + 1 >= 27:
+            self.walkCount = 0
+        if self.left:
+            win.blit(walkLeft[self.walkCount//3], (self.x, self.y))
+            self.walkCount += 1
+        elif self.right:
+            win.blit(walkRight[self.walkCount//3], (self.x, self.y))
+            self.walkCount += 1
+        else:
+            win.blit(char, (self.x, self.y))
+        
 # Redraw
 def redrawGameWindow():
-    global walkCount
     win.blit(bg, (0,0))
-    if walkCount + 1 >= 27:
-        walkCount = 0
-    if left:
-        win.blit(walkLeft[walkCount//3], (x,y))
-        walkCount += 1
-    elif right:
-        win.blit(walkRight[walkCount//3], (x,y))
-        walkCount += 1
-    else:
-        win.blit(char, (x,y))
+    man.draw(win)
     pygame.display.update()
 
 # Main Loop
+man = player(300, 410, 64, 64)
 run = True
 while run:
     clock.tick(27)
@@ -58,34 +93,17 @@ while run:
     keys = pygame.key.get_pressed()
     
     # Movement and Boundaries
-    if keys[pygame.K_LEFT] and x > vel:
-        x = x - vel
-        left = True
-        right = False
-    elif keys[pygame.K_RIGHT] and x < sw - vel - width:
-        x = x + vel
-        left = False
-        right = True
+    if keys[pygame.K_LEFT] and man.x > man.vel:
+        man.moveLeft()
+    elif keys[pygame.K_RIGHT] and man.x < sw - man.vel - man.width:
+        man.moveRight()
     else:
-        right = False
-        left = False
-        walkCount = 0
-    if not(isJump): # Disabled when jump
+        man.stand()
+    if not(man.airBorne): # Disabled when jump
         if keys[pygame.K_SPACE]:
-            isJump = True
-            right = False
-            left = False
-            walkCount = 0
+            man.jumpInit()
     else:
-        if jumpCount >= -10:
-            neg = 1
-            if jumpCount < 0:
-                neg = -1
-            y = y - neg * (jumpCount ** 2) * 0.5
-            jumpCount = jumpCount - 1
-        else:
-            isJump = False
-            jumpCount = 10
+        man.jump()
     redrawGameWindow()
 
 pygame.quit()
