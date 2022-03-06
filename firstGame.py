@@ -16,6 +16,12 @@ bg = pygame.image.load(asset + 'bg.jpg')
 char = pygame.image.load(asset + 'standing.png')
 
 clock = pygame.time.Clock()
+bulletSound = pygame.mixer.Sound(asset + "Game_bullet.mp3")
+hitSound = pygame.mixer.Sound(asset + "Game_hit.mp3")
+music = pygame.mixer.music.load("Asset#1/music.mp3")
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.5)
+
 score = 0
 
 class player(object):
@@ -82,6 +88,26 @@ class player(object):
             self.airBorne = False
             self.jumpCount = 10
 
+    def hit(self):
+        self.x = 60
+        self.y = 410
+        self.walkCount = 0
+        self.airBorne = False
+        self.jumpCount = 10
+        font1 = pygame.font.SysFont("comicsans", 100)
+        text = font1.render("-5", 1, (255, 0, 0))
+        win.blit(text, (sw/2 - (text.get_width())/2, sh/2 - (text.get_height())/2))
+        pygame.display.update()
+        i = 0
+        while i < 100:
+            pygame.time.delay(10)
+            i += 1
+            for event in pygame.event.get():
+                if event == pygame.QUIT:
+                    i = 301
+                    pygame.quit()
+        
+
 class enemy(object):
     walkRight = [pygame.image.load(asset + 'R1E.png'), pygame.image.load(asset + 'R2E.png'), pygame.image.load(asset + 'R3E.png'), pygame.image.load(asset + 'R4E.png'), pygame.image.load(asset + 'R5E.png'), pygame.image.load(asset + 'R6E.png'), pygame.image.load(asset + 'R7E.png'), pygame.image.load(asset + 'R8E.png'), pygame.image.load(asset + 'R9E.png'), pygame.image.load(asset + 'R10E.png'), pygame.image.load(asset + 'R11E.png')]
     walkLeft =  [pygame.image.load(asset + 'L1E.png'), pygame.image.load(asset + 'L2E.png'), pygame.image.load(asset + 'L3E.png'), pygame.image.load(asset + 'L4E.png'), pygame.image.load(asset + 'L5E.png'), pygame.image.load(asset + 'L6E.png'), pygame.image.load(asset + 'L7E.png'), pygame.image.load(asset + 'L8E.png'), pygame.image.load(asset + 'L9E.png'), pygame.image.load(asset + 'L10E.png'), pygame.image.load(asset + 'L11E.png')]
@@ -114,8 +140,7 @@ class enemy(object):
             self.hitbox = (self.x + 10, self.y, 40, 57)
             pygame.draw.rect(win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
             pygame.draw.rect(win, (0, 127, 0), (self.hitbox[0], self.hitbox[1] - 20, 50 - (50 / 10) * (10 - self.health), 10))
-            
-        # pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+            # pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
         
     
     def move(self):
@@ -187,6 +212,11 @@ run = True
 while run:
     clock.tick(27)
     
+    if man.hitbox[1] < goblin.hitbox[1] + goblin.hitbox[3] and man.hitbox[1] + man.hitbox[3] > goblin.hitbox[1]:
+        if goblin.visible and man.hitbox[0] + man.hitbox[2] > goblin.hitbox[0] and man.hitbox[0] < goblin.hitbox[0] + goblin.hitbox[2]:
+            man.hit()
+            score -= 5
+    
     if CD > 0:
         CD += 1
     if CD > 5:
@@ -198,8 +228,9 @@ while run:
     
     for bullet in bullets:
         if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
-            if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+            if goblin.visible and bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
                 goblin.hit()
+                hitSound.play()
                 score += 1
                 bullets.pop(bullets.index(bullet))
                 bb.number += 1
@@ -220,6 +251,7 @@ while run:
             facing = 1
         if len(bullets) < 5:
             bb.number -= 1
+            bulletSound.play()
             bullets.append(projectile(round(man.x + man.width//2), round(man.y + man.height//2), 6, (0, 0, 0), facing))
         
     
