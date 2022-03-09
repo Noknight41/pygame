@@ -1,9 +1,9 @@
 class Node:
-    def __init__(self,data,level,fval):
+    def __init__(self, data, level):
         """ Initialize the node with the data, level of the node and the calculated fvalue """
         self.data = data
         self.level = level
-        self.fval = fval
+        self.solution = []
         
     def generate_child(self):
         """ Generate child nodes from the given node by moving the blank space
@@ -17,7 +17,8 @@ class Node:
         for i in val_list:
             child = self.shuffle_move(self.data, x, y, i[0], i[1])
             if child is not None:
-                child_node = Node(child, self.level+1, 0)
+                child_node = Node(child, self.level + 1)
+                child_node.solution = self.solution + [self]
                 children.append(child_node)
         return children
         
@@ -71,19 +72,20 @@ class Puzzle:
             puz.append(temp)
         return puz
     
-    def f(self,start,goal):
-        """ Heuristic Function to calculate hueristic value f(x) = h(x) + g(x) """
-        return self.h(start.data, goal) + start.level
-    
-    def h(self,start,goal):
+    def isGoal(self, start, goal):
         """ Calculates the different between the given puzzles """
         temp = 0
         for i in range(0,self.n):
             for j in range(0,self.n):
                 if start[i][j] != goal[i][j] and start[i][j] != '_':
                     temp += 1
-        return temp
-        
+        return temp == 0
+    
+    def printSolution(self, node_list):
+        for node in node_list.solution:
+            print("\n")
+            node.printMatrix()
+
     def process(self):
         """ Accept Start and Goal Puzzle state"""
         print("Enter the start state matrix \n")
@@ -91,24 +93,20 @@ class Puzzle:
         print("Enter the goal state matrix \n")        
         goal = self.accept()
         
-        start = Node(start,0,0)
-        start.fval = self.f(start,goal)
+        start = Node(start, 0)
         self.open.append(start)
         print("\n\n")
         while True:
             cur = self.open[0]
-            print("\n")
-            cur.printMatrix()   
             """ If the difference between current and goal node is 0 we have reached the goal node"""
-            if(self.h(cur.data, goal) == 0):
+            if(self.isGoal(cur.data, goal)):
+                cur.solution = cur.solution + [cur.data]
+                self.printSolution(cur)
                 break
             for i in cur.generate_child():
-                i.fval = self.f(i, goal)
                 self.open.append(i)
             self.closed.append(cur)
             del self.open[0]
-            """ Sort the open list based on f value """
-            self.open.sort(key = lambda x: x.fval, reverse = False)
 
 puz = Puzzle(3)
 puz.process()
